@@ -5,7 +5,7 @@ A HTTP service exposing Prometheus metrics, built with Gin and Uber Fx. Includes
 ### Features
 - **HTTP framework**: Gin (`/` returns JSON)
 - **Dependency injection & lifecycle**: Uber Fx (graceful shutdown)
-- **Observability**: Prometheus metrics at `/metrics` (Go client default collectors)
+- **Observability**: JSON `slog` logs, OpenTelemetry HTTP traces, and Prometheus metrics at `/metrics`
 - **Probes**: `/healthz` (liveness), `/readyz` (readiness)
 
 ### Requirements
@@ -21,6 +21,22 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/healthz
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/readyz
 curl -s http://localhost:8080/metrics | head
 ```
+
+By default, traces are exported to an OTLP gRPC collector at
+`localhost:4317`. Configure the service with environment variables:
+
+```bash
+SERVICE_NAME=demo-go
+SERVICE_VERSION=dev
+HTTP_ADDR=:8080
+OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+OTEL_EXPORTER_OTLP_INSECURE=true
+```
+
+Request logs are JSON written to stdout. When tracing is active, HTTP request
+logs include `trace_id` and `span_id` fields for correlation with exported
+spans. The application does not require a collector to start, but spans cannot
+be exported until one is available.
 
 Build a local binary:
 ```bash
